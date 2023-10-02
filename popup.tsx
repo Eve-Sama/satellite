@@ -1,22 +1,33 @@
 import { Button, Form, Slider } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { sendToContentScript } from '@plasmohq/messaging';
+import { Storage } from '@plasmohq/storage';
 
-function IndexPopup() {
-  const [speed, setSpeed] = useState(50);
+export interface Config {
+  speed: number;
+}
 
-  const onSpeedChange = (value: number) => setSpeed(value);
-  const applyConfig = async () => {
-    console.log('apply');
-    // https://github.com/PlasmoHQ/plasmo/issues/583
+function App() {
+  const [form] = Form.useForm<Config>();
+  const storage = new Storage();
 
-    const csResponse = await sendToContentScript({
-      name: 'speed',
-      body: speed.toString(),
-      // body: speed.toString(),
-    });
+  useEffect(function initForm() {
+    (async () => {
+      const config = await storage.get<Config>('config');
+      form.setFieldsValue(config);
+    })();
+  }, []);
 
-    console.log(csResponse);
+  const onSubmit = (values: Config) => {
+    (async () => {
+      const { speed } = values;
+      const config = await storage.get<Config>('config');
+      await storage.set('config', {...config, speed});
+      await sendToContentScript({
+        name: 'config update',
+        body: speed.toString(),
+      });
+    })();
   };
 
   return (
@@ -26,30 +37,22 @@ function IndexPopup() {
         height: '400px',
       }}
     >
-      {/* <Slider defaultValue={30} /> */}
       <Form
+        form={form}
         name="basic"
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 20 }}
         style={{ padding: 10 }}
         initialValues={{ remember: true }}
         autoComplete="off"
+        onFinish={onSubmit}
       >
-        <Form.Item label="阅读速度" name="username">
-          <Slider
-            defaultValue={50}
-            min={1}
-            max={100}
-            onChange={onSpeedChange}
-          />
+        <Form.Item label="阅读速度" name="speed">
+          <Slider min={1} max={100} />
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 10, span: 2 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            onClick={() => applyConfig().then()}
-          >
+          <Button type="primary" htmlType="submit">
             应用
           </Button>
         </Form.Item>
@@ -58,4 +61,4 @@ function IndexPopup() {
   );
 }
 
-export default IndexPopup;
+export default App;

@@ -1,24 +1,37 @@
 import { useMessage } from '@plasmohq/messaging/hook';
 import type { PlasmoCSConfig } from 'plasmo';
+import type { Config } from '~popup';
+import { Storage } from '@plasmohq/storage';
 
 export const config: PlasmoCSConfig = {
   matches: ['https://weread.qq.com/*'],
 };
+const storage = new Storage();
 
-const GetSpeedListener = () => {
+const App = () => {
   useMessage<string, string>(async (req) => {
-    speed = parseInt(req.body) / 100;
+    (async () => {
+      if (req.name === 'config update') {
+        const config = await storage.get<Config>('config');
+        speed = config.speed / 100;
+        console.log(`Satellite: 更新自动阅读速度为每帧率移动${speed}像素`);
+      }
+    })();
+    // else if (req.name === 'config init') {
+    //   console.log(`Satellite: 检测到初次使用, 已使用默认配置`);
+    // }
   });
 };
 
-export default GetSpeedListener;
+export default App;
 
 let speed = 0.5;
 let startAutoScroll = false;
 let recordScroll: number;
 
 function initScrollHeight() {
-  let currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
+  let currentScroll =
+    document.documentElement.scrollTop || document.body.scrollTop;
   recordScroll = currentScroll;
 }
 
@@ -44,11 +57,20 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('load', () => {
-  const styles = ['color:green', 'background:yellow', 'font-size:20px', 'border:1px solid red', 'text-shadow:1px 1px black', 'padding:10px'].join(';');
+  const styles = [
+    'color:green',
+    'background:yellow',
+    'font-size:20px',
+    'border:1px solid red',
+    'text-shadow:1px 1px black',
+    'padding:10px',
+  ].join(';');
 
   console.log('%c%s', styles, '当前页面可使用 Satellite 进行辅助操作');
   if (!window.requestAnimationFrame) {
-    console.error('Satellite: 该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!');
+    console.error(
+      'Satellite: 该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!',
+    );
     return;
   }
 });
