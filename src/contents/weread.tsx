@@ -1,7 +1,7 @@
 import { useMessage } from '@plasmohq/messaging/hook';
 import type { PlasmoCSConfig } from 'plasmo';
-import type { Config } from '~popup';
 import { Storage } from '@plasmohq/storage';
+import type { Config } from '~src/popup';
 
 export const config: PlasmoCSConfig = {
   matches: ['https://weread.qq.com/*'],

@@ -1,5 +1,5 @@
 import { Storage } from '@plasmohq/storage';
-import type { Config } from '~popup';
+import type { Config } from '~src/popup';
 
 export {};
 (async () => {
