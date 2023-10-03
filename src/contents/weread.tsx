@@ -2,25 +2,73 @@ import { useMessage } from '@plasmohq/messaging/hook';
 import type { PlasmoCSConfig } from 'plasmo';
 import { Storage } from '@plasmohq/storage';
 import type { Config } from '~src/popup';
+import { useEffect, useState } from 'react';
 
 export const config: PlasmoCSConfig = {
   matches: ['https://weread.qq.com/*'],
 };
 const storage = new Storage();
+let localConfig: Config;
+let _setText: React.Dispatch<React.SetStateAction<string>>;
+let timer: NodeJS.Timeout;
+
+(async () => {
+  localConfig = await storage.get<Config>('config');
+})();
+
+/** 在页面上显示文本, 2秒后自动消失 */
+function notify(text: string): void {
+  clearTimeout(timer);
+  _setText(text);
+  timer = setTimeout(() => _setText(undefined), localConfig.notifyTime);
+}
 
 const App = () => {
+  const [text, setText] = useState(undefined);
+  _setText = setText;
+
+  useEffect(() => {
+    notify('欢迎使用');
+  }, []);
+
   useMessage<string, string>(async (req) => {
     (async () => {
       if (req.name === 'config update') {
-        const config = await storage.get<Config>('config');
-        speed = config.speed / 100;
-        console.log(`Satellite: 更新自动阅读速度为每帧率移动${speed}像素`);
+        localConfig = await storage.get<Config>('config');
+        speed = localConfig.speed / 100;
+        notify(`当前速度:${speed}像素`);
       }
     })();
-    // else if (req.name === 'config init') {
-    //   console.log(`Satellite: 检测到初次使用, 已使用默认配置`);
-    // }
   });
+
+  const renderDom = () => {
+    if (text) {
+      return (
+        <div
+          style={{
+            padding: '10px',
+            left: '0',
+            top: '0',
+            // left: '50%',
+            // top: '50%',
+            // transform: 'translate(-50%, -50%)' /* 50%为自身尺寸的一半 */,
+            color: '#fff',
+            fontSize: '30px',
+            position: 'fixed',
+            textShadow: '1px 1px black',
+          }}
+        >
+          <span>Satellite:</span>
+          <br />
+          <span>{text}</span>
+        </div>
+      );
+    } else {
+      return null;
+    }
+  };
+
+  return <>{renderDom()}</>;
 };
 
 export default App;
@@ -48,11 +96,11 @@ window.addEventListener('keydown', (e) => {
     case 'x':
       startAutoReading = !startAutoReading;
       if (startAutoReading) {
-        console.log('Satellite: 开启自动阅读');
+        notify('开启自动阅读');
         initScrollHeight();
         window.requestAnimationFrame(addScrollTop);
       } else {
-        console.log('Satellite: 关闭自动阅读');
+        notify('关闭自动阅读');
       }
       break;
     // dispatchEvent 不生效, 所以只能手动模拟上滑和下滑
@@ -74,8 +122,8 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('load', () => {
   // #region 不支持就提示换浏览器, 不做兼容方案, 还用老掉牙浏览器的人, 不配使用我的插件
   if (!window.requestAnimationFrame) {
-    console.error(
-      'Satellite: 该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!',
+    notify(
+      '该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!',
     );
     return;
   }
@@ -100,7 +148,7 @@ window.addEventListener('load', () => {
       subtree: true,
     });
   } else {
-    console.log('Satellite: 章节标题容器DOM已更换类名无法查找!');
+    notify('章节标题容器DOM已更换类名无法查找!');
   }
   // #endregion
 });

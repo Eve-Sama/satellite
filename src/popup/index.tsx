@@ -1,10 +1,13 @@
-import { Button, Form, Slider } from 'antd';
+import { Button, Form, InputNumber, Slider } from 'antd';
 import React, { useEffect } from 'react';
 import { sendToContentScript } from '@plasmohq/messaging';
 import { Storage } from '@plasmohq/storage';
 
 export interface Config {
+  /** 自动阅读的速度 */
   speed: number;
+  /** 屏幕通知的停留时间 */
+  notifyTime: number;
 }
 
 function App() {
@@ -20,9 +23,9 @@ function App() {
 
   const onSubmit = (values: Config) => {
     (async () => {
-      const { speed } = values;
+      const { speed, notifyTime } = values;
       const config = await storage.get<Config>('config');
-      await storage.set('config', {...config, speed});
+      await storage.set('config', { ...config, speed, notifyTime });
       await sendToContentScript({
         name: 'config update',
         body: speed.toString(),
@@ -34,15 +37,14 @@ function App() {
     <div
       style={{
         width: '560px',
-        height: '100px',
+        height: '220px',
       }}
     >
       <Form
         form={form}
         name="basic"
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 20 }}
-        style={{ padding: 10 }}
+        labelCol={{ span: 5 }}
+        wrapperCol={{ span: 19 }}
         initialValues={{ remember: true }}
         autoComplete="off"
         onFinish={onSubmit}
@@ -52,6 +54,9 @@ function App() {
         </Form.Item>
         <Form.Item label="快捷键">
           x: 开始/停止自动阅读 w: 向上滑动 s: 向下滑动 (暂不支持更改)
+        </Form.Item>
+        <Form.Item label="提示停留时间" name="notifyTime">
+          <InputNumber min={1} />
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 10, span: 2 }}>
