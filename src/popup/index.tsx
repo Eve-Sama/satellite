@@ -34,7 +34,7 @@ function App() {
     <div
       style={{
         width: '560px',
-        height: '400px',
+        height: '100px',
       }}
     >
       <Form
@@ -49,6 +49,9 @@ function App() {
       >
         <Form.Item label="阅读速度" name="speed">
           <Slider min={1} max={100} />
+        </Form.Item>
+        <Form.Item label="快捷键">
+          x: 开始/停止自动阅读 w: 向上滑动 s: 向下滑动 (暂不支持更改)
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 10, span: 2 }}>
