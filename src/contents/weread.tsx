@@ -26,7 +26,7 @@ const App = () => {
 export default App;
 
 let speed = 0.5;
-let startAutoScroll = false;
+let startAutoReading = false;
 let recordScroll: number;
 
 function initScrollHeight() {
@@ -38,21 +38,33 @@ function initScrollHeight() {
 function addScrollTop(): void {
   recordScroll += speed;
   document.documentElement.scrollTop = recordScroll;
-  if (startAutoScroll) {
+  if (startAutoReading) {
     window.requestAnimationFrame(addScrollTop);
   }
 }
-
 window.addEventListener('keydown', (e) => {
-  if (e.key === 's') {
-    startAutoScroll = !startAutoScroll;
-    if (startAutoScroll) {
-      console.log('Satellite: 开启自动阅读');
+  switch (e.key) {
+    case 'x':
+      startAutoReading = !startAutoReading;
+      if (startAutoReading) {
+        console.log('Satellite: 开启自动阅读');
+        initScrollHeight();
+        window.requestAnimationFrame(addScrollTop);
+      } else {
+        console.log('Satellite: 关闭自动阅读');
+      }
+      break;
+    // dispatchEvent 不生效, 所以只能手动模拟
+    case 'w':
       initScrollHeight();
-      window.requestAnimationFrame(addScrollTop);
-    } else {
-      console.log('Satellite: 关闭自动阅读');
-    }
+      recordScroll -= 45;
+      document.documentElement.scrollTop = recordScroll;
+      break;
+    case 's':
+      initScrollHeight();
+      recordScroll += 45;
+      document.documentElement.scrollTop = recordScroll;
+      break;
   }
 });
 
