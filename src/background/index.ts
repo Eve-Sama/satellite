@@ -10,7 +10,7 @@ export {};
   
   if (!config) {
     const defaultConfig = {
-      speed: 50,
+      speed: 20,
     };
     await storage.set('config', defaultConfig);
   }

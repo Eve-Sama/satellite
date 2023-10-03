@@ -44,6 +44,7 @@ function addScrollTop(): void {
 }
 window.addEventListener('keydown', (e) => {
   switch (e.key) {
+    // 开启/关闭自动阅读
     case 'x':
       startAutoReading = !startAutoReading;
       if (startAutoReading) {
@@ -54,12 +55,14 @@ window.addEventListener('keydown', (e) => {
         console.log('Satellite: 关闭自动阅读');
       }
       break;
-    // dispatchEvent 不生效, 所以只能手动模拟
+    // dispatchEvent 不生效, 所以只能手动模拟上滑和下滑
+    case 'ArrowUp':
     case 'w':
       initScrollHeight();
       recordScroll -= 45;
       document.documentElement.scrollTop = recordScroll;
       break;
+    case 'ArrowDown':
     case 's':
       initScrollHeight();
       recordScroll += 45;
@@ -69,20 +72,35 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('load', () => {
-  const styles = [
-    'color:green',
-    'background:yellow',
-    'font-size:20px',
-    'border:1px solid red',
-    'text-shadow:1px 1px black',
-    'padding:10px',
-  ].join(';');
-
-  console.log('%c%s', styles, '当前页面可使用 Satellite 进行辅助操作');
+  // #region 不支持就提示换浏览器, 不做兼容方案, 还用老掉牙浏览器的人, 不配使用我的插件
   if (!window.requestAnimationFrame) {
     console.error(
       'Satellite: 该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!',
     );
     return;
   }
+  // #endregion
+
+  (async () => {
+    const config = await storage.get<Config>('config');
+    speed = config.speed / 100;
+  })();
+
+  // #region 当承载章节名的容器内容变化时, 认为是翻页了, 需要重置滚轴高度
+  const title = document.querySelector('.readerTopBar_title_chapter');
+  if (title) {
+    const documentObserver = new MutationObserver(function () {
+      document.documentElement.scrollTop = 0;
+      initScrollHeight();
+    });
+    documentObserver.observe(title, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  } else {
+    console.log('Satellite: 章节标题容器DOM已更换类名无法查找!');
+  }
+  // #endregion
 });
