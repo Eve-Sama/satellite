@@ -28,7 +28,6 @@ function App() {
       await storage.set('config', { ...config, speed, notifyTime });
       await sendToContentScript({
         name: 'config update',
-        body: speed.toString(),
       });
     })();
   };
@@ -53,7 +52,7 @@ function App() {
           <Slider min={1} max={100} />
         </Form.Item>
         <Form.Item label="快捷键">
-          x: 开始/停止自动阅读 w: 向上滑动 s: 向下滑动 (暂不支持更改)
+          x: 开始/停止自动阅读 w/s: 上下滑动 a/d:调整阅读速度
         </Form.Item>
         <Form.Item label="提示停留时间" name="notifyTime">
           <InputNumber min={1} />

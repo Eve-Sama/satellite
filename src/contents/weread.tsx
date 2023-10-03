@@ -3,6 +3,7 @@ import type { PlasmoCSConfig } from 'plasmo';
 import { Storage } from '@plasmohq/storage';
 import type { Config } from '~src/popup';
 import { useEffect, useState } from 'react';
+import { Subject, debounceTime } from 'rxjs';
 
 export const config: PlasmoCSConfig = {
   matches: ['https://weread.qq.com/*'],
@@ -11,6 +12,14 @@ const storage = new Storage();
 let localConfig: Config;
 let _setText: React.Dispatch<React.SetStateAction<string>>;
 let timer: NodeJS.Timeout;
+const updateConfig$ = new Subject<void>();
+
+// 防抖更新本地配置, 否则更新频率太高会报错, https://stackoverflow.com/questions/66092333/chrome-extension-max-write-operations-per-minute-error
+updateConfig$.pipe(debounceTime(500)).subscribe(() => {
+  (async () => {
+    await storage.set('config', localConfig);
+  })();
+});
 
 (async () => {
   localConfig = await storage.get<Config>('config');
@@ -21,6 +30,11 @@ function notify(text: string): void {
   clearTimeout(timer);
   _setText(text);
   timer = setTimeout(() => _setText(undefined), localConfig.notifyTime);
+}
+
+function speedChange(): void {
+  speed = localConfig.speed / 100;
+  notify(`当前速度:${speed}像素`);
 }
 
 const App = () => {
@@ -34,9 +48,10 @@ const App = () => {
   useMessage<string, string>(async (req) => {
     (async () => {
       if (req.name === 'config update') {
-        localConfig = await storage.get<Config>('config');
-        speed = localConfig.speed / 100;
-        notify(`当前速度:${speed}像素`);
+        (async () => {
+          localConfig = await storage.get<Config>('config');
+          speedChange();
+        })();
       }
     })();
   });
@@ -49,9 +64,6 @@ const App = () => {
             padding: '10px',
             left: '0',
             top: '0',
-            // left: '50%',
-            // top: '50%',
-            // transform: 'translate(-50%, -50%)' /* 50%为自身尺寸的一半 */,
             color: '#fff',
             fontSize: '30px',
             position: 'fixed',
@@ -116,15 +128,31 @@ window.addEventListener('keydown', (e) => {
       recordScroll += 45;
       document.documentElement.scrollTop = recordScroll;
       break;
+    case 'a':
+      if (localConfig.speed > 1) {
+        localConfig.speed -= 1;
+        updateConfig$.next();
+        speedChange();
+      } else {
+        notify(`最小速度为${localConfig.speed / 100}像素`);
+      }
+      break;
+    case 'd':
+      if (localConfig.speed < 100) {
+        localConfig.speed += 1;
+        updateConfig$.next();
+        speedChange();
+      } else {
+        notify(`最大速度为${localConfig.speed / 100}像素`);
+      }
+      break;
   }
 });
 
 window.addEventListener('load', () => {
   // #region 不支持就提示换浏览器, 不做兼容方案, 还用老掉牙浏览器的人, 不配使用我的插件
   if (!window.requestAnimationFrame) {
-    notify(
-      '该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!',
-    );
+    notify('该浏览器暂不支持 requestAnimationFrame API, 请更换浏览器!');
     return;
   }
   // #endregion
