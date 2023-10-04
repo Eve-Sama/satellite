@@ -1,7 +1,7 @@
 import { useMessage } from '@plasmohq/messaging/hook';
 import type { PlasmoCSConfig } from 'plasmo';
 import { Storage } from '@plasmohq/storage';
-import type { Config } from '~src/popup';
+import type { Config } from '~/popup';
 import { useEffect, useState } from 'react';
 import { Subject, debounceTime } from 'rxjs';
 
