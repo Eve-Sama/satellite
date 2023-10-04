@@ -1,7 +1,7 @@
 {
   "name": "satellite",
   "displayName": "Satellite",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Eve-Sama's personal browser extension",
   "author": "Eve-Sama",
   "scripts": {
